@@ -14,10 +14,11 @@
   }
 
   /* === Soap bubbles === */
-  .bubbles{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+  .bubbles{position:fixed;inset:0;pointer-events:auto;z-index:2;overflow:hidden}
 
   .bub{
     pointer-events:auto;cursor:pointer;
+    touch-action:manipulation;
     position:absolute;border-radius:50%;
     background:
       radial-gradient(circle at 30% 22%, #fff 0 2.5%, rgba(255,255,255,.85) 2.5% 6%, transparent 10%),
@@ -88,6 +89,7 @@
   .stage{
     position:relative;z-index:5;height:100%;
     display:flex;align-items:center;justify-content:center;padding:24px;
+    pointer-events:none;
   }
 
   /* Outer glass window frame */
@@ -96,6 +98,7 @@
     border-radius:8px;
     position:relative;
     overflow:hidden;
+    pointer-events:auto;
 
     /* The Aero glass tint — almost fully transparent */
     background: linear-gradient(180deg,
@@ -413,6 +416,34 @@
   const root = document.getElementById('bubbles');
   const N = 26;
 
+  document.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0) return;
+
+    const bubbles = Array.from(root.querySelectorAll('.bub')).reverse();
+    for (const bubble of bubbles) {
+      if (bubble._popping) continue;
+
+      const rect = bubble.getBoundingClientRect();
+      const radius = Math.min(rect.width, rect.height) / 2;
+      const dx = event.clientX - (rect.left + radius);
+      const dy = event.clientY - (rect.top + radius);
+
+      if (dx * dx + dy * dy <= radius * radius) {
+        event.preventDefault();
+        pop(bubble);
+        break;
+      }
+    }
+  });
+
+  function bindBubble(b) {
+    b.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      pop(b);
+    });
+  }
+
   function createSplash(cx, cy, size) {
     const s = document.createElement('div');
     s.className = 'splash';
@@ -496,7 +527,7 @@
     const d = 14 + Math.random() * 22;
     b.style.animationDuration = d + 's';
     b.style.animationDelay    = '0s';
-    b.addEventListener('click', () => pop(b));
+    bindBubble(b);
     root.appendChild(b);
   }
 
@@ -512,7 +543,7 @@
     const d = 14 + Math.random() * 22;
     b.style.animationDuration = d + 's';
     b.style.animationDelay    = (-Math.random() * d) + 's';
-    b.addEventListener('click', () => pop(b));
+    bindBubble(b);
     root.appendChild(b);
   }
 </script>
